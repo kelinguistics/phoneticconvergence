@@ -543,21 +543,25 @@ run_did_prediction <- function(vot_data, name) {
 }
 ```
 
+### DID (P+T+K)
 ```
 run_did_prediction(vot_table, "P+T+K")
 ```
 <img width="468" alt="did_ptk_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/013df5d0-c085-4e1d-8496-3862fc3e6f9c">
 
+### DID (P)
 ```
 run_did_prediction(vot_table_p, "P")
 ```
 <img width="468" alt="did_p_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/ad940ffa-d556-4cb9-afce-b56ffe58c091">
 
+### DID (T)
 ```
 run_did_prediction(vot_table_t, "T")
 ```
 <img width="468" alt="did_t_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/b7ae1fdf-b6fb-4cae-b857-6087bbc842f5">
 
+### DID (K)
 ```
 run_did_prediction(vot_table_k, "K")
 ```
@@ -622,12 +626,12 @@ summary(shift_predictor)
 
 We found that T and K stops are significant predictors of the VOT convergence score, for all three considered VOT metrics. The Shadow-to-Base Shift metric can be predicted the best (with the highest AIC value) using these predictors. Nielsen score was found to be the most difficult to predict, out of the three metrics that were considered.
 
-
 # Conclusion
+
 In this tutorial, I presented three different methods for measuring convergence in linguistic performance between shadow and baseline tasks: DID score, Nielsen score, Shadow-to-Base Shift metric. I applied the tutorial to VOT data. While Nielsen score operated similarly to Shadow-to-Base Shift, DID metric could not capture directionality in the shift. I demonstrated that out of the three metrics, the Shadow-to-Base Shift metric was the most “explainable” using the data in the VOT study.
 
-
 # References
+
 Phillips, S., & Clopper, C. G. (2011, May). Perceived imitation of regional dialects. In 
 Proceedings of Meetings on Acoustics 161ASA (Vol. 12, No. 1, p. 060002). Acoustical 
 Society of America.
