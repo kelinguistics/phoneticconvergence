@@ -308,13 +308,15 @@ source("plot_vot_scores_comparisons.r")
 First, we look at the differences in the distributions of the convergence metrics, across different slices of the dataset (P+T+K, P, T, K stop conditions). We simply plot distributions of the metric values for each kind of the metric, and a dataset slice:
 
 ```
-# plot_vot_scores.r:
-#
-# This script plots VOT convergence scores individually, based on data in
-# "vot_table" and slices extracted from "vot_table" using "extract_slices.r".
+# from plot_vot_scores.r:
+
+# We create a function plot_scores() that plots convergence scores for
+# a metric specified as a parameter ("name"), and a slice of data 
+# specified as another parameter ("vot_table"). Then we apply this function
+# to plot different metrics on different slices of data.
 
 # Plots the convergence scores for the metric "name", based on data in
-# "vot_table".
+# "vot_table". 
 plot_scores <- function(vot_table, name, title_for_all_plots) {
   par(mfrow=c(1, 3))
   
@@ -340,22 +342,133 @@ plot_scores <- function(vot_table, name, title_for_all_plots) {
   
   readline(prompt="Press [enter] to continue")
 }
+```
 
+#### Distributions of DID Scores
+
+##### DID (P+T+K)
+```
 plot_scores(vot_table, "did_vot_score", "P+T+K")
+```
+<img width="468" alt="did_ptk" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/da61d9c6-3d5d-4334-b6fb-24829599c7b5">
+
+##### DID (P)
+```
 plot_scores(vot_table_p, "did_vot_score", "P")
+```
+<img width="468" alt="did_p" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/15879300-01f9-4e21-a844-a3eabe2a1837">
+
+##### DID (T)
+```
 plot_scores(vot_table_t, "did_vot_score", "T")
+```
+<img width="468" alt="did_t" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/6c54275f-2fdc-41c3-9f37-b440d009f6e1">
+
+##### DID (K)
+```
 plot_scores(vot_table_k, "did_vot_score", "K")
+```
+<img width="468" alt="did_k" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/b1e014c8-94d7-48a2-89e2-35c803f2056d">
 
+
+#### Distribution of Nielsen Scores
+
+##### Nielsen (P+T+K)
+```
 plot_scores(vot_table, "nielsen_vot_score", "P+T+K")
-plot_scores(vot_table_p, "nielsen_vot_score", "P")
-plot_scores(vot_table_t, "nielsen_vot_score", "T")
-plot_scores(vot_table_k, "nielsen_vot_score", "K")
+```
+<img width="468" alt="nielsen_ptk" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/f0ad5e46-986c-457b-9ec5-6e19e4a070b5">
 
+##### Nielsen (P)
+```
+plot_scores(vot_table_p, "nielsen_vot_score", "P")
+```
+<img width="468" alt="Nielsen_p" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/9b1464d9-3a3e-44b8-9215-f498bb40fab7">
+
+##### Nielsen (T)
+```
+plot_scores(vot_table_t, "nielsen_vot_score", "T")
+```
+<img width="468" alt="Nielsen_T" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/d981d933-9e4f-42b5-991b-2c050e1c448d">
+
+##### Nielsen (K)
+```
+plot_scores(vot_table_k, "nielsen_vot_score", "K")
+```
+<img width="468" alt="Nielsen_K" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/4c5beef4-6970-4ddc-9103-d250e6210e78">
+
+
+#### Distribution of Shift Scores
+
+##### Shadow to Baselline Shift score (P+T+K)
+```
 plot_scores(vot_table, "shift_vot_score", "P+T+K")
+```
+<img width="468" alt="shift_ptk" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/8201e5f2-f5bc-423d-a529-ed2e547ae38e">
+
+##### Shadow to Baseline Shift score (P)
+```
 plot_scores(vot_table_p, "shift_vot_score", "P")
+```
+<img width="468" alt="shift_p" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/ab4cb8c3-37a8-4d2f-8672-25cd4d58e984">
+
+##### Shadow to Baseline Shift score (T)
+```
 plot_scores(vot_table_t, "shift_vot_score", "T")
+```
+<img width="468" alt="shift_t" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/32a84d91-4cd6-4193-be53-caedbe6863ef">
+
+##### Shadow to Baseline Shift score (K)
+```
 plot_scores(vot_table_k, "shift_vot_score", "K")
 ```
+<img width="468" alt="shift_k" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/ff51eaa0-4571-465c-9efd-3b3810e8a984">
+
+
+#### Interpretation
+While it may be difficult to spot the differences between the shapes while looking briefly, the K stop condition has a different distribution shape for each metric kind.
+
+
+### Comparisons
+
+To interpret the differences between metrics in a visually more meaningful way, we also do scatter-plots of the observed metric values, and compare the DID and Nielsen scores against the Shadow-to-Baseline Shift scores:
+
+```
+# plot_vot_scores_comparisons.r:
+#
+# This scripts plots DID/Nielsen VOT scores vs. VOT shift scores using the
+# data in "vot_table".
+
+# Plot raw VOT score data.
+#
+# The cross shape for [ did_score, shift_score ] illustrates that
+# "did_score" is unable to predict the directionality of convergence (is
+# "shift_score >= 0" or "shift_score < 0"?). Specifically, for a given
+# "shift_score" on the y axis (which is positive or negative), we get
+# associated both positive and negative DID score values.
+#
+# "did_score" is not a predictor for "shift_score"
+# [ VOT shadow to baseline convergence ]
+
+par(mfrow=c(1, 2))
+plot(vot_table$did_vot_score, vot_table$shift_vot_score, 
+     xlab="DID VOT score", ylab="VOT Shadow to Baseline", pch=1)
+plot(vot_table$nielsen_vot_score , vot_table$shift_vot_score, 
+     xlab="Nielsen VOT score", ylab="VOT Shadow to Baseline", pch=1)
+```
+
+We obtain:
+
+<img width="468" alt="did_vs_nielsen" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/b261a6b6-44c4-450a-a40b-51976b9d4551">
+
+Now, we get to see an interesting phenomenon. While both Nielsen and Shadow-to-Baseline are able to express the directionality of the convergence (i.e., is the VOT value increasing or decreasing from shadow to baseline), the DID metric cannot. Looking at the plot on the left (the cross shape), for example, when the Shadow-to-Baseline shift is positive, the corresponding DID metric can be either positive or negative. Similarly, when the DID metric is positive, the Shadow-to-Baseline shift can be either positive or negative. As such, DID cannot predict the direction of the shift, the Shadow-to-Baseline score.
+
+
+
+
+
+
+
 
 
 
