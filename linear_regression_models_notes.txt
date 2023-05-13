@@ -1,0 +1,69 @@
+* linear regression model example:
+
+Consider a model that is going to predict AGE as a linear function of HEIGHT_CM
+and WALKING_SPEED plus some constant. Thus, mathematically, our predictor looks 
+like
+
+  AGE = <value1> * HEIGHT_CM + <value2> * WALKING_SPEED + <value3> * 1
+
+Terminology:
+  "<value1> * HEIGHT_CM + <value2> * WALKING_SPEED": this part is called linear
+  combination of input variables (features),
+  "<value3> * 1": this part is called bias term, <value3> is intercept
+
+Parameters of the model are:
+  <value1>, <value2>, <value3>
+  
+We want to fit our model to the data: that means we want to find the model
+parameters that explain the data the best. We use R to find those <values>.
+To do that:
+
+1) we have to tell R what our model looks like:
+
+"AGE ~ HEIGHT_CM + WALKING_SPEED + 1"
+
+2) we ask R to optimize parameters (<values>) for this model:
+
+lm(AGE ~ HEIGHT_CM + WALKING_SPEED + 1)
+
+and way may get maybe something like:
+
+AGE = 3.5 * HEIGHT_CM - 11.34 * WALKING_SPEED + 0.3 * 1
+
+* general syntax for model equations:
+
+For variables with real numbers (A, B, C, ...)
+
+# A predicted as a multiple of B plus a constant
+A ~ B         # A = <value> * B + <value> * 1
+
+# A predicted as a multiple of B plus a multiple of C plus a constant
+A ~ B + C     # A = <value> * B + <value> * C + <value> * 1
+
+# A predicted as a multiple of (B times C), (B times C) is a new variable called cross of B and C
+A ~ B : C     # A = <value> * (B * C) + <value> * 1
+
+A ~ B * C:    # Same as "A ~ B + C + B : C".
+              # A = <value> * A + <value> * B + <value> * (B * C) + <value> * 1
+              
+* what happens with categorical variables (factors) with levels
+
+example: SEX with two levels: M, F
+
+# rows:
+# AGE.      SEX.    HEIGHT_CM.   WALK_SPEED
+# 25          F       145           3
+# ....
+# 30          M        150          5
+
+AGE ~ SEX + HEIGHT_CM + WALKING_SPEED + 1
+   # This model is implementing this mathematical predictor
+   # AGE = <value> * (SEX == "M") + <value> * (SEX == "F") + <value> * HEIGHT_CM +
+   #   <value> * WALKING_SPEED + <value> * 1
+   
+For each level LEVEL of categorical variable VAR, you get 
+"<value> * (VAR == LEVEL)" as a contribution in the predictor equation. Each
+LEVEL has a different <value>. For example, for SEX:
+- when SEX == "M", we add some <value> into the predicted regressed value (AGE)
+- when SEX == "F", we add some *other* <value> into predicted AGE
+[ so each level has a different contribution ]
