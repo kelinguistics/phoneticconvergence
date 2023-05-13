@@ -129,3 +129,99 @@ vot_table_k <- vot_table[vot_table$stop == "K", ]
 vot_table_l1 <- vot_table[vot_table$interlocutor == "L1", ]
 vot_table_l2 <- vot_table[vot_table$interlocutor == "L2", ]
 ```
+
+# Inspecting Data
+
+Next, we inspect the VOT data that we collected in the study and that we are going to use for the rest of the tutorial:
+
+```
+source("plot_vot_distributions.r")
+source("plot_vot_means.r")
+```
+
+## Plotting VOT Distributions
+
+First, we look at the distributions of VOT values in the baseline and shadow task, separately, and before and after outlier removal:
+
+```
+# plot_vot_distributions.r:
+#
+# This script plots VOT baseline and VOT shadow distributions for the data
+# in "vot_table_with_outliers" and in "vot_table".
+
+par(mfrow=c(2, 2))
+boxplot(vot_table_with_outliers$vot_baseline ~ vot_table_with_outliers$stop, 
+        xlab="Stop", ylab="VOT Baseline (ms)")
+title("Before Outlier Removal")
+
+boxplot(vot_table$vot_baseline ~ vot_table$stop, 
+        xlab="Stop", ylab="VOT Baseline (ms)")
+title("After Outlier Removal")
+
+boxplot(vot_table_with_outliers$vot_shadow ~ vot_table_with_outliers$stop, 
+        xlab="Stop", ylab="VOT Shadow (ms)")
+boxplot(vot_table$vot_shadow ~ vot_table$stop, 
+        xlab="Stop", ylab="VOT Shadow (ms)")
+```
+
+We obtain the following plots:
+
+<img width="468" alt="outlier" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/92d773bc-716a-43ba-94e4-5758698fda5c">
+
+## Plotting VOT Means
+
+For better understandability of VOT differences across the data slices, we also plot mean VOT changes from the baseline to the shadow task sidewise:
+
+```
+# plot_vot_means.r:
+#
+# This script plots means of VOT baseline vs. shadow for the data previously 
+# sliced from "vot_table" using "extract_slices.r".
+
+par(mfrow=c(1, 2))
+
+# Calculate mean VOT values for baseline and shadow data by stop conditions
+# and L1 vs L2.
+
+vot_means_l1 <- aggregate(vot_table_l1[c("vot_baseline", "vot_shadow")], 
+                   by = list(vot_table_l1$stop), 
+                   FUN = mean)
+colnames(vot_means_l1) <- c("Stop", "Baseline", "Shadow")
+
+vot_means_l2 <- aggregate(vot_table_l2[c("vot_baseline", "vot_shadow")], 
+                          by = list(vot_table_l2$stop), 
+                          FUN = mean)
+colnames(vot_means_l2) <- c("Stop", "Baseline", "Shadow")
+
+# Create barplots with paired bars.
+
+barplot(height = t(as.matrix(vot_means_l1[, -1])), 
+        beside = TRUE, 
+        names.arg = vot_means_l1$Stop, 
+        ylim=c(0, 100),
+        main = "VOT Baseline vs. Shadow (L1)", 
+        xlab = "Stop",
+        ylab = "Mean VOT Time (ms)",
+        legend.text = TRUE,
+        args.legend = list(x = "topright", inset = c(0, -0.05)),
+        col = c("blue", "red"))
+
+barplot(height = t(as.matrix(vot_means_l2[, -1])), 
+        beside = TRUE, 
+        names.arg = vot_means_l2$Stop, 
+        ylim=c(0, 100),
+        main = "VOT Baseline vs. Shadow (L2)", 
+        xlab = "Stop",
+        ylab = "Mean VOT Time (ms)",
+        legend.text = TRUE,
+        args.legend = list(x = "topright", inset = c(0, -0.05)),
+        col = c("blue", "red"))
+```
+
+We obtain the following bar plots, and we can see that regardless of interlocutor condition (L1 vs. L2), participants VOT measurements dropped from baseline to shadow, which is consistent with the literature on Mandarin VOTs and demonstrating phonetic convergence happens (although we do not yet know to what degree) regardless of my participants’ beliefs about the interlocutor’s native language status.
+
+<img width="468" alt="pic2" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/52dddc01-f9fe-48fb-96f5-2ba5550747fa">
+
+
+
+
