@@ -222,6 +222,143 @@ We obtain the following bar plots, and we can see that regardless of interlocuto
 
 <img width="468" alt="pic2" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/52dddc01-f9fe-48fb-96f5-2ba5550747fa">
 
+# Convergence Scores
+
+The main focus of this tutorial is to explore different ways of measuring changes in linguistic performance in the baseline and shadow task, and highlight some of their merits and downsides. Here, we are interested in evaluating the performance differences in VOT using common convergence metrics (scores).
+
+
+## Computing Scores
+
+We consider these three kinds of scores: DID-score, Nielsen score, raw Baseline-to-Shadow shift score. 
+To reflect trends in our study data, we first flip the position of “baseline” and “shadow” from the formulae presented in the introduction: we know that our participants’ baseline production has longer time measurements than their shadow position, and we want to use positive scores to characterize this trend.
+
+As such, we use the following definitions for the metrics in experiments:
+- DID = |Baseline - Model| - |Shadow - Model|, where Model is the performance of the model speaker,
+- Nielsen = 100 * (Baseline / Shadow - 1),
+- Shadow-to-Baseline = Baseline - Shadow.
+
+We compute these scores using
+
+```
+source("compute_vot_scores.r")
+```
+
+containing
+
+```
+# compute_vot_scores.r:
+#
+# This script computes the three kinds of convergence scores for VOT in the
+# "vot_table" table.
+
+# Compute difference-in-difference score (DID):
+#
+# did_score = abs(baseline - model) - abs(shadow - model)
+#
+# This metric looks at change relative to the model speaker, between
+# baseline and shadow task.
+
+vot_table$did_vot_score <- 
+  abs(vot_table$vot_baseline - vot_table$vot_model) -
+  abs(vot_table$vot_shadow - vot_table$vot_model)
+
+# Compute Nielsen convergence score:
+#
+# nielsen_score = 100 * (baseline / shadow - 1)
+#
+# This metric does not consider the model speaker performance. Note that
+# we use "baseline / shadow" (not the other way around), because in our
+# data "baseline" tends to be *larger* than "shadow" (which is the
+# opposite trend of what Nielsen had in her paper).
+
+vot_table$nielsen_vot_score <- 
+  100 * (vot_table$vot_baseline / vot_table$vot_shadow - 1)
+
+# Compute shift convergence score:
+#
+# shift_score = baseline - shadow.
+#
+# This metric also does not consider the model speaker performance.
+#
+# Note that "nielsen_score = 100 * shift_score / shadow" 
+# [ "nielsen_score" is a percentage of the change relative to "shadow",
+# "shift_score" is absolute change ]
+
+vot_table$shift_vot_score <- vot_table$vot_baseline - vot_table$vot_shadow
+
+# Explore data.
+
+vot_table[20, c("vot_baseline", "vot_shadow", "vot_model", "did_vot_score", 
+                "nielsen_vot_score", "shift_vot_score")]
+```
+
+## Inspecting Scores
+
+As we expect there to be differences in the metrics, we plot the obtained score values and compare one metric kind against another visually. To follow this part, we execute
+
+```
+# Plot the kinds of VOT scores and comparisons between them.
+
+source("plot_vot_scores.r")
+source("plot_vot_scores_comparisons.r")
+```
+
+### Score distributions
+
+First, we look at the differences in the distributions of the convergence metrics, across different slices of the dataset (P+T+K, P, T, K stop conditions). We simply plot distributions of the metric values for each kind of the metric, and a dataset slice:
+
+```
+# plot_vot_scores.r:
+#
+# This script plots VOT convergence scores individually, based on data in
+# "vot_table" and slices extracted from "vot_table" using "extract_slices.r".
+
+# Plots the convergence scores for the metric "name", based on data in
+# "vot_table".
+plot_scores <- function(vot_table, name, title_for_all_plots) {
+  par(mfrow=c(1, 3))
+  
+  # Plot distributions of scores for L1 and L2 as boxplots.
+  
+  boxplot(vot_table[, name] ~ vot_table$interlocutor, xlab="Interlocutor", 
+          ylab=name)
+  title(title_for_all_plots)
+  
+  # Plot distributions of scores for L1 as a histogram + density function.
+  
+  hist(vot_table[vot_table$interlocutor == "L1", name], freq=F, 
+       main=c("Distribution of ", name), xlab=c(name, "L1"), ylab="density")
+  lines(density(vot_table[vot_table$interlocutor == "L1", name]))
+  
+  # Plot distributions of scores for L2 as a histogram + density function.
+  
+  hist(vot_table[vot_table$interlocutor == "L2", name], freq=F, 
+       main=c("Distribution of ", name), xlab=c(name, "L2"), ylab="density")
+  lines(density(vot_table[vot_table$interlocutor == "L2", name]))
+  
+  # Wait for a [enter] to continue.
+  
+  readline(prompt="Press [enter] to continue")
+}
+
+plot_scores(vot_table, "did_vot_score", "P+T+K")
+plot_scores(vot_table_p, "did_vot_score", "P")
+plot_scores(vot_table_t, "did_vot_score", "T")
+plot_scores(vot_table_k, "did_vot_score", "K")
+
+plot_scores(vot_table, "nielsen_vot_score", "P+T+K")
+plot_scores(vot_table_p, "nielsen_vot_score", "P")
+plot_scores(vot_table_t, "nielsen_vot_score", "T")
+plot_scores(vot_table_k, "nielsen_vot_score", "K")
+
+plot_scores(vot_table, "shift_vot_score", "P+T+K")
+plot_scores(vot_table_p, "shift_vot_score", "P")
+plot_scores(vot_table_t, "shift_vot_score", "T")
+plot_scores(vot_table_k, "shift_vot_score", "K")
+```
+
+
+
 
 
 
