@@ -168,6 +168,11 @@ We obtain the following plots:
 
 <img width="468" alt="outlier" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/92d773bc-716a-43ba-94e4-5758698fda5c">
 
+We see that before the removal of outliers, both baseline and shadow seemed to have a more clear
+distinction in the VOT, ranking P < T < K. The outlier removal erased the differences between P 
+and T for the baseline condition. This may be an indication that the `cut_off` parameter was set
+too aggressively. 
+
 ## Plotting VOT Means
 
 For better understandability of VOT differences across the data slices, we also plot mean VOT changes from the baseline to the shadow task sidewise:
