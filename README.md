@@ -337,10 +337,6 @@ plot_scores <- function(vot_table, name, title_for_all_plots) {
   hist(vot_table[vot_table$interlocutor == "L2", name], freq=F, 
        main=c("Distribution of ", name), xlab=c(name, "L2"), ylab="density")
   lines(density(vot_table[vot_table$interlocutor == "L2", name]))
-  
-  # Wait for a [enter] to continue.
-  
-  readline(prompt="Press [enter] to continue")
 }
 ```
 
@@ -464,14 +460,182 @@ We obtain:
 Now, we get to see an interesting phenomenon. While both Nielsen and Shadow-to-Baseline are able to express the directionality of the convergence (i.e., is the VOT value increasing or decreasing from shadow to baseline), the DID metric cannot. Looking at the plot on the left (the cross shape), for example, when the Shadow-to-Baseline shift is positive, the corresponding DID metric can be either positive or negative. Similarly, when the DID metric is positive, the Shadow-to-Baseline shift can be either positive or negative. As such, DID cannot predict the direction of the shift, the Shadow-to-Baseline score.
 
 
+## Directionality of Convergence
+To characterize the DID directionality problem quantitatively, we conduct an additional experiment:
+1. We split the dataset to points where "baseline - shadow >= 0" (VOT drops, group A) and "baseline - shadow < 0" (VOT increases, group B).
+2. We show that we can find a linear model that predicts group A data using DID. The implication is that for the points in group A, when "baseline - shadow >= 0", DID works "similarly" to the "baseline - shadow" score, but DID scores are both negative and positive.
+3. We show that we can find another model that predicts group B data using DID. The implication is that for the points in group B, when "baseline - shadow < 0", DID works "similarly" to the "baseline - shadow" score, but DID scores are both negative and positive.
+4. We show that when we combine the group A and group B data (as group AB), DID predicts the "baseline - shadow" value worse (e.g., higher residual error of the fit, higher AIC). The implication is that, when we don't know if "baseline - shadow > 0" or "baseline - shadow < 0", DID cannot predict the "baseline - shadow" score as well. Therefore, the DID score metric has difficulty telling between divergence and convergence.
+
+As before, we apply this experiment to relevant slices of the dataset (P+T+K, P, T, K stops):
+
+```
+# from plot_vot_convergence_vs_divergence.r:
+
+# We create a function run_did_prediction() that runs the DID directionality
+# experiment for a slice of data specified by a parameter ("vot_table"), and a
+# name of this slice specified by another parameter ("name"). Then we apply this 
+# function to process different slices of data.
+
+# This function fits linear models to VOT data in the groups A, B, AB.
+#
+# The data comes from "vot_table", which can be a slice of the full table,
+# or the full table. The "name" parameter specifies the printable name of
+# the processed data slice.
+run_did_prediction <- function(vot_data, name) {
+  par(mfrow=c(1, 3))
+
+  group_a <- vot_data[vot_data$vot_baseline - vot_data$vot_shadow >= 0, ]
+  group_b <- vot_data[vot_data$vot_baseline - vot_data$vot_shadow < 0, ]
+  group_ab <- vot_data
+
+  shadow_to_baseline_a <- group_a$vot_baseline - group_a$vot_shadow
+  shadow_to_baseline_b <- group_b$vot_baseline - group_b$vot_shadow
+  shadow_to_baseline_ab <- group_ab$vot_baseline - group_ab$vot_shadow
+  
+  did_score_a <- group_a$did_vot_score
+  did_score_b <- group_b$did_vot_score
+  did_score_ab <- group_ab$did_vot_score
+  
+  # Show how for group A, "did_score_a" predicts "shadow_to_baseline_a".
+  #
+  # Shift always >= 0, DID can be anything.
+  
+  plot(shadow_to_baseline_a ~ did_score_a, 
+       xlab="DID score", ylab="Shadow to Baseline Shift (ms), Group A")
+  group_a_fit <- glm(shadow_to_baseline_a ~ did_score_a)
+  print(group_a_fit)
+
+  abline(group_a_fit, col="red")
+  title(c("Shift >= 0", name))
+  
+  # Show how for group B, "did_score_b" predicts "shadow_to_baseline_b".
+  #
+  # Shift always < 0, DID can be anything.
+  
+  plot(shadow_to_baseline_b ~ did_score_b, 
+       xlab="DID score", ylab="Shadow to Baseline Shift (ms), Group B")
+  group_b_fit <- glm(shadow_to_baseline_b ~ did_score_b)
+  print(group_b_fit)
+  abline(group_b_fit, col="red")
+  title(c("Shift < 0", name))
+  
+  # Show how for group AB, "did_score_ab" *does not* predict 
+  # "shadow_to_baseline_ab".
+  #
+  # Shift can be anything, DID can be anything.
+  
+  plot(shadow_to_baseline_ab ~ did_score_ab, 
+       xlab="DID score", ylab="Shadow to Baseline Shift (ms), Group A + B")
+  group_ab_fit <- glm(shadow_to_baseline_ab ~ did_score_ab)
+  print(group_ab_fit)
+  abline(group_ab_fit, col="red")
+  title(c("Shift >= 0 or < 0", name))
+
+  summary(glm(group_a_fit)) # moderate residual, smaller AIC
+  summary(glm(group_b_fit)) # moderate residual, smaller AIC
+  summary(glm(group_ab_fit)) # larger residual, larger AIC
+}
+```
+
+```
+run_did_prediction(vot_table, "P+T+K")
+```
+<img width="468" alt="did_ptk_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/013df5d0-c085-4e1d-8496-3862fc3e6f9c">
+
+```
+run_did_prediction(vot_table_p, "P")
+```
+<img width="468" alt="did_p_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/ad940ffa-d556-4cb9-afce-b56ffe58c091">
+
+```
+run_did_prediction(vot_table_t, "T")
+```
+<img width="468" alt="did_t_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/b7ae1fdf-b6fb-4cae-b857-6087bbc842f5">
+
+```
+run_did_prediction(vot_table_k, "K")
+```
+<img width="468" alt="did_k_model" src="https://github.com/klin1208/phoneticconvergence/assets/126110100/555a7df1-989c-4b7c-9150-357c8d106cd3">
+
+For all of the four data slices (P+T+K, P, T, K stops), the residual error of the fit and the AIC is largest for the third model on the right, confirming (4) from the experiment plan. For example, for the K stop data slice, the group A is fit with the residual = 247 and AIC = 1762, the group B is fit with the residual = 131, AIC = 883, and the group AB is fit with the residual = 380, AIC = 2844.
+
+# Predicting Convergence Scores using Other Variables in the VOT Study
+
+We apply the metrics from the tutorial to the data in the original VOT study, and test which VOT convergence metric can be best predicted by linear models in terms of other variables present in our data. In other words, we are evaluating which of the three considered metrics is most “explainable” for the data from our study:
+
+```
+# vot_score_linear_models.r:
+#
+# This script builds linear models to predict VOT convergence scores for the
+# VOT score kinds in "vot_table" from other variables in the table.
+#
+# It shows which variables/conditions in the study can explain the observed
+# VOT convergence, and which kind of VOT score can be predicted "best" using 
+# linear models for the data in the study. The same predictors are used for
+# each model, the difference is in the outcome variable (VOT score) that is
+# being predicted.
+
+did_predictor <- glm(
+  vot_table$did_vot_score ~ 
+  vot_table$vot_baseline + 
+  (vot_table$stop) * (vot_table$interlocutor),
+  family="gaussian")
+print(summary(did_predictor)) 
+  # AIC: 7868.9 (lower is better)
+  #
+  # "T", "K" are statistically significant predictors (p-values of dropping
+  # the predictors are less than alpha = 0.05). Specifically, "L2" is not 
+  # significant.
+
+nielsen_predictor <- glm(
+  vot_table$nielsen_vot_score ~ 
+  vot_table$vot_baseline + 
+  (vot_table$stop) * (vot_table$interlocutor),
+  family="gaussian")
+print(summary(nielsen_predictor))
+  # AIC: 8661.1 (lower is better)
+  #
+  # "T", "K" are statistically significant predictors (p-values of dropping
+  # the predictors are less than alpha = 0.05). Specifically, "L2" is not 
+  # significant.
+
+shift_predictor <- glm(
+  vot_table$shift_vot_score ~ 
+  vot_table$vot_baseline + 
+  (vot_table$stop) * (vot_table$interlocutor),
+  family="gaussian")
+summary(shift_predictor) 
+  # AIC: 7837.8 (lower is better)
+  #
+  # "T", "K" are statistically significant predictors (p-values of dropping
+  # the predictors are less than alpha = 0.05). Specifically, "L2" is not
+  # significant.
+  #
+  # The linear model is able to predict the "shift VOT score" the best.
+```
+
+We found that T and K stops are significant predictors of the VOT convergence score, for all three considered VOT metrics. The Shadow-to-Base Shift metric can be predicted the best (with the highest AIC value) using these predictors. Nielsen score was found to be the most difficult to predict, out of the three metrics that were considered.
 
 
+# Conclusion
+In this tutorial, I presented three different methods for measuring convergence in linguistic performance between shadow and baseline tasks: DID score, Nielsen score, Shadow-to-Base Shift metric. I applied the tutorial to VOT data. While Nielsen score operated similarly to Shadow-to-Base Shift, DID metric could not capture directionality in the shift. I demonstrated that out of the three metrics, the Shadow-to-Base Shift metric was the most “explainable” using the data in the VOT study.
 
 
+# References
+Phillips, S., & Clopper, C. G. (2011, May). Perceived imitation of regional dialects. In 
+Proceedings of Meetings on Acoustics 161ASA (Vol. 12, No. 1, p. 060002). Acoustical 
+Society of America.
 
+Nielsen, K. (2011). Specificity and abstractness of VOT imitation. Journal of Phonetics, 39(2), 
+132-142.
 
+MacLeod, B. (2021). Problems in the Difference-in-Distance measure of phonetic imitation. 
+Journal of Phonetics, 87, 101058.
 
+Phillips, S., & Clopper, C. G. (2011, May). Perceived imitation of regional dialects. In 
+Proceedings of Meetings on Acoustics 161ASA (Vol. 12, No. 1, p. 060002). Acoustical 
+Society of America.
 
-
-
-
+Priva, U. C., & Sanker, C. (2019). Limitations of difference-in-difference for measuring 
+convergence. Laboratory Phonology, 10(1).
